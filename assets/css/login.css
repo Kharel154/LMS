@@ -1,0 +1,78 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+
+
+}
+
+.login-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4vh;
+    justify-content: center;
+    align-items: center;
+    height: 40vh;
+    width: 50vh;
+    background-color: #f0f0f0;
+    border-radius: 4vh;
+    box-shadow: 0 4px 15px rgb(46, 52, 107);
+
+}
+
+h1 {
+    font-size: 4vh;
+    color: #404e9c;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+
+}
+
+.pwd {
+    width: 35vh;
+    height: 4vh;
+    border-radius: 2vh;
+    padding-left: 2vh;
+    font-size: 2vh;
+}
+
+.email {
+    width: 35vh;
+    height: 4vh;
+    border-radius: 2vh;
+    padding-left: 2vh;
+    font-size: 2vh;
+}
+
+.connect {
+    width: 15vh;
+    height: 4vh;
+    border-radius: 2vh;
+    font-size: 2vh;
+    background: #404e9c;
+    color: #f0f0f0;
+    cursor: pointer;
+}
+
+.connect:hover {
+    transform: scale(1.08);
+    transition: transform 0.3s ease-in-out;
+}
+
+.connect:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease-in-out;
+}
