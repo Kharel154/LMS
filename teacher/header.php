@@ -16,22 +16,32 @@ if (!isset($title)) $title = "LMS - Enseignant";
 </head>
 <body>
     <div class="layout">
+        <!-- Overlay sombre derrière le tiroir mobile -->
+        <div class="sidebar-overlay"></div>
+
         <!-- Sidebar Enseignant -->
         <aside class="sidebar">
             <div class="logo">LMS Prof</div>
             <nav>
-                <a href="dashboard.php" class="nav-link">Tableau de bord</a>
-                <a href="my_courses.php" class="nav-link">Mes cours</a>
-                <a href="course_builder.php" class="nav-link">Créer un cours</a>
-                <a href="grading_hub.php" class="nav-link">Corrections</a>
-                <a href="student_progress.php" class="nav-link">Suivi élèves</a>
+                <a href="dashboard.php" class="nav-link"><span>Tableau de bord</span></a>
+                <a href="my_courses.php" class="nav-link"><span>Mes cours</span></a>
+                <a href="course_builder.php" class="nav-link"><span>Créer un cours</span></a>
+                <a href="grading_hub.php" class="nav-link"><span>Corrections</span></a>
+                <a href="student_progress.php" class="nav-link"><span>Suivi élèves</span></a>
             </nav>
         </aside>
 
         <main class="main-content">
             <header class="topbar">
-                <div class="welcome">
-                    Prof. <strong><?= htmlspecialchars($_SESSION['prenom'] ?? '') ?></strong>
+                <div style="display:flex; align-items:center;">
+                    <button class="menu-toggle" aria-label="Ouvrir le menu">
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                    </button>
+                    <div class="welcome">
+                        Prof. <strong><?= htmlspecialchars($_SESSION['prenom'] ?? '') ?></strong>
+                    </div>
                 </div>
                 <div class="user-menu">
                     <a href="../index.php?logout=1" 

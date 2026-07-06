@@ -16,28 +16,37 @@ if (!isset($title)) $title = "LMS - Étudiant";
 </head>
 <body>
     <div class="layout">
+        <!-- Overlay sombre derrière le tiroir mobile -->
+        <div class="sidebar-overlay"></div>
+
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="logo">LMS</div>
             <nav>
-                <a href="dashboard.php" class="nav-link"> Tableau de bord</a>
-                <a href="catalogue.php" class="nav-link"> Catalogue</a>
-                <a href="my_notes.php" class="nav-link"> Mes notes</a>
-                <a href="my_certificates.php" class="nav-link"> Certificats</a>
-                <a href="upload_assignment.php" class="nav-link"> Déposer devoir</a>
+                <a href="dashboard.php" class="nav-link"><span>Tableau de bord</span></a>
+                <a href="catalogue.php" class="nav-link"><span>Catalogue</span></a>
+                <a href="my_notes.php" class="nav-link"><span>Mes notes</span></a>
+                <a href="my_certificates.php" class="nav-link"><span>Certificats</span></a>
+                <a href="upload_assignment.php" class="nav-link"><span>Déposer devoir</span></a>
             </nav>
         </aside>
 
         <!-- Contenu principal -->
         <main class="main-content">
-                        <!-- Top bar -->
+            <!-- Top bar -->
             <header class="topbar">
-                <div class="welcome">
-                    Bonjour, <strong><?= htmlspecialchars($_SESSION['prenom'] ?? 'Étudiant') ?></strong>
+                <div style="display:flex; align-items:center;">
+                    <button class="menu-toggle" aria-label="Ouvrir le menu">
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                    </button>
+                    <div class="welcome">
+                        Bonjour, <strong><?= htmlspecialchars($_SESSION['prenom'] ?? 'Étudiant') ?></strong>
+                    </div>
                 </div>
-                
+
                 <div class="user-menu">
-                    
                     <a href="../index.php?logout=1" 
                        style="background:#EF4444; color:white; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:500;">
                          Déconnexion

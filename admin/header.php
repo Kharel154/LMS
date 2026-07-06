@@ -17,24 +17,34 @@ if (!isset($title)) $title = "LMS - Administration";
 </head>
 <body>
     <div class="layout">
+        <!-- Overlay sombre derrière le tiroir mobile -->
+        <div class="sidebar-overlay"></div>
+
         <!-- Sidebar Admin -->
         <aside class="sidebar">
             <div class="logo">LMS Admin</div>
             <nav>
-                <a href="dashboard.php" class="nav-link"> Dashboard</a>
-                <a href="users.php" class="nav-link">Utilisateurs</a>
-                <a href="modules.php" class="nav-link"> Modules</a>
-                <a href="course_validation.php" class="nav-link">Validation</a>
-                <a href="analytics.php" class="nav-link">Analytics</a>
-                <a href="reports.php" class="nav-link">Signalements</a>
-                <a href="system_config.php" class="nav-link"> Configuration</a>
+                <a href="dashboard.php" class="nav-link"><span>Dashboard</span></a>
+                <a href="users.php" class="nav-link"><span>Utilisateurs</span></a>
+                <a href="modules.php" class="nav-link"><span>Modules</span></a>
+                <a href="course_validation.php" class="nav-link"><span>Validation</span></a>
+                <a href="analytics.php" class="nav-link"><span>Analytics</span></a>
+                <a href="reports.php" class="nav-link"><span>Signalements</span></a>
+                <a href="system_config.php" class="nav-link"><span>Configuration</span></a>
             </nav>
         </aside>
 
         <main class="main-content">
             <header class="topbar">
-                <div class="welcome">
-                    Administration — <strong><?= htmlspecialchars($_SESSION['prenom'] ?? '') ?></strong>
+                <div style="display:flex; align-items:center;">
+                    <button class="menu-toggle" aria-label="Ouvrir le menu">
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                    </button>
+                    <div class="welcome">
+                        Administration — <strong><?= htmlspecialchars($_SESSION['prenom'] ?? '') ?></strong>
+                    </div>
                 </div>
                 <div class="user-menu">
                     <a href="../index.php?logout=1" 

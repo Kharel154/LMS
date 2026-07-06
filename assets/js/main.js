@@ -43,3 +43,46 @@ document.addEventListener('click', (e) => {
         if (dropdown) dropdown.style.display = 'none';
     }
 });
+
+
+// Gère l'ouverture/fermeture de la sidebar en tiroir sur mobile
+
+document.addEventListener('DOMContentLoaded', () => {
+    const sidebar = document.querySelector('.sidebar');
+    const toggleBtn = document.querySelector('.menu-toggle');
+    const overlay = document.querySelector('.sidebar-overlay');
+
+    if (!sidebar || !toggleBtn || !overlay) return; // sécurité si une page n'a pas ces éléments
+
+    function openSidebar() {
+        sidebar.classList.add('open');
+        overlay.classList.add('active');
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('active');
+    }
+
+    toggleBtn.addEventListener('click', () => {
+        if (sidebar.classList.contains('open')) {
+            closeSidebar();
+        } else {
+            openSidebar();
+        }
+    });
+
+    overlay.addEventListener('click', closeSidebar);
+
+    // Ferme le tiroir automatiquement si on clique sur un lien du menu
+    sidebar.querySelectorAll('nav a').forEach(link => {
+        link.addEventListener('click', closeSidebar);
+    });
+
+    // Ferme le tiroir si on repasse en desktop (resize)
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768) {
+            closeSidebar();
+        }
+    });
+});

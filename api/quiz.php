@@ -19,102 +19,112 @@ $response = ['success' => false, 'message' => 'Action invalide'];
 try {
 
 
-    $action = $_GET['action'] ?? $_POST['action'] ?? '';
+$action = $_GET['action'] ?? $_POST['action'] ?? '';
 
-    if ($action === 'submit_attempt' && $_SERVER['REQUEST_METHOD'] === 'POST' && has_role('student')) {
+if ($action === 'submit_attempt' && $_SERVER['REQUEST_METHOD'] === 'POST' && has_role('student')) {
 
-        $input = json_decode(file_get_contents('php://input'), true);
-        $quiz_id = (int)($input['quiz_id'] ?? 0);
-        $answers = $input['answers'] ?? [];
+    $input = json_decode(file_get_contents('php://input'), true);
+    $quiz_id = (int)($input['quiz_id'] ?? 0);
+    $answers = $input['answers'] ?? [];
 
-        if (empty($quiz_id) || empty($answers)) {
-            $response['message'] = 'Réponses manquantes.';
-            echo json_encode($response);
-            exit;
-        }
-
-        // Vérifie que l'étudiant est bien inscrit au cours de ce quiz
-        $stmt = $pdo->prepare("
-            SELECT q.id, q.note_passage, q.lesson_id, l.course_id
-            FROM quizzes q
-            JOIN lessons l ON l.id = q.lesson_id
-            JOIN courses c ON c.id = l.course_id
-            JOIN enrollments e ON e.course_id = c.id AND e.student_id = ?
-            WHERE q.id = ?
-        ");
-        $stmt->execute([$_SESSION['user_id'], $quiz_id]);
-        $quizInfo = $stmt->fetch();
-
-        if (!$quizInfo) {
-            $response['message'] = 'Évaluation introuvable ou accès non autorisé.';
-            echo json_encode($response);
-            exit;
-        }
-
-        // Nombre total de questions du quiz (pour calculer le score sur l'ensemble, même si une réponse manque)
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM quiz_questions WHERE quiz_id = ?");
-        $stmt->execute([$quiz_id]);
-        $totalQuestions = (int)$stmt->fetchColumn();
-
-        if ($totalQuestions === 0) {
-            $response['message'] = "Ce quiz ne contient aucune question.";
-            echo json_encode($response);
-            exit;
-        }
-
-        $pdo->beginTransaction();
-
-        // Crée la tentative (score provisoire à 0, mis à jour ensuite)
-        $stmt = $pdo->prepare("INSERT INTO quiz_attempts (student_id, quiz_id, score, passed) VALUES (?, ?, 0, 0)");
-        $stmt->execute([$_SESSION['user_id'], $quiz_id]);
-        $attempt_id = $pdo->lastInsertId();
-
-        $correctCount = 0;
-
-        $stmtCheck = $pdo->prepare("SELECT is_correct FROM quiz_choices WHERE id = ? AND question_id = ?");
-        $stmtInsertAnswer = $pdo->prepare("INSERT INTO quiz_answers (attempt_id, question_id, choice_id) VALUES (?, ?, ?)");
-
-        foreach ($answers as $a) {
-            $question_id = (int)($a['question_id'] ?? 0);
-            $choice_id   = (int)($a['choice_id'] ?? 0);
-            if (!$question_id || !$choice_id) continue;
-
-            $stmtCheck->execute([$choice_id, $question_id]);
-            $isCorrect = $stmtCheck->fetchColumn();
-
-            if ($isCorrect) $correctCount++;
-
-            $stmtInsertAnswer->execute([$attempt_id, $question_id, $choice_id]);
-        }
-
-        $score = round(($correctCount / $totalQuestions) * 100, 2);
-        $passed = $score >= $quizInfo['note_passage'] ? 1 : 0;
-
-        $stmt = $pdo->prepare("UPDATE quiz_attempts SET score = ?, passed = ? WHERE id = ?");
-        $stmt->execute([$score, $passed, $attempt_id]);
-
-        // Si réussi : marque la leçon comme "termine" dans lesson_progress
-        if ($passed) {
-            $stmt = $pdo->prepare("
-                INSERT INTO lesson_progress (student_id, lesson_id, statut, date_completion)
-                VALUES (?, ?, 'termine', NOW())
-                ON DUPLICATE KEY UPDATE statut = 'termine', date_completion = NOW()
-            ");
-            $stmt->execute([$_SESSION['user_id'], $quizInfo['lesson_id']]);
-        }
-
-        $pdo->commit();
-
-        $response = [
-            'success' => true,
-            'score' => $score,
-            'passed' => (bool)$passed,
-            'message' => $passed ? 'Évaluation réussie !' : 'Score insuffisant.'
-        ];
-
+    if (empty($quiz_id) || empty($answers)) {
+        $response['message'] = 'Réponses manquantes.';
         echo json_encode($response);
         exit;
     }
+
+    // Vérifie que l'étudiant est bien inscrit au cours de ce quiz
+    $stmt = $pdo->prepare("
+        SELECT q.id, q.note_passage, q.lesson_id, l.course_id
+        FROM quizzes q
+        JOIN lessons l ON l.id = q.lesson_id
+        JOIN courses c ON c.id = l.course_id
+        JOIN enrollments e ON e.course_id = c.id AND e.student_id = ?
+        WHERE q.id = ?
+    ");
+    $stmt->execute([$_SESSION['user_id'], $quiz_id]);
+    $quizInfo = $stmt->fetch();
+
+    if (!$quizInfo) {
+        $response['message'] = 'Évaluation introuvable ou accès non autorisé.';
+        echo json_encode($response);
+        exit;
+    }
+
+    // Nombre total de questions du quiz (pour calculer le score sur l'ensemble, même si une réponse manque)
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM quiz_questions WHERE quiz_id = ?");
+    $stmt->execute([$quiz_id]);
+    $totalQuestions = (int)$stmt->fetchColumn();
+
+    if ($totalQuestions === 0) {
+        $response['message'] = "Ce quiz ne contient aucune question.";
+        echo json_encode($response);
+        exit;
+    }
+
+    $pdo->beginTransaction();
+
+    // Crée la tentative (score provisoire à 0, mis à jour ensuite)
+    $stmt = $pdo->prepare("INSERT INTO quiz_attempts (student_id, quiz_id, score, passed) VALUES (?, ?, 0, 0)");
+    $stmt->execute([$_SESSION['user_id'], $quiz_id]);
+    $attempt_id = $pdo->lastInsertId();
+
+    $correctCount = 0;
+
+    $stmtCheck = $pdo->prepare("SELECT is_correct FROM quiz_choices WHERE id = ? AND question_id = ?");
+    $stmtInsertAnswer = $pdo->prepare("INSERT INTO quiz_answers (attempt_id, question_id, choice_id) VALUES (?, ?, ?)");
+
+    foreach ($answers as $a) {
+        $question_id = (int)($a['question_id'] ?? 0);
+        $choice_id   = (int)($a['choice_id'] ?? 0);
+        if (!$question_id || !$choice_id) continue;
+
+        $stmtCheck->execute([$choice_id, $question_id]);
+        $isCorrect = $stmtCheck->fetchColumn();
+
+        if ($isCorrect) $correctCount++;
+
+        $stmtInsertAnswer->execute([$attempt_id, $question_id, $choice_id]);
+    }
+
+    $score = round(($correctCount / $totalQuestions) * 100, 2);
+    $passed = $score >= $quizInfo['note_passage'] ? 1 : 0;
+
+    $stmt = $pdo->prepare("UPDATE quiz_attempts SET score = ?, passed = ? WHERE id = ?");
+    $stmt->execute([$score, $passed, $attempt_id]);
+
+    $newCertificate = null;
+
+    // Si réussi : marque la leçon comme "termine" dans lesson_progress
+    if ($passed) {
+        $stmt = $pdo->prepare("
+            INSERT INTO lesson_progress (student_id, lesson_id, statut, date_completion)
+            VALUES (?, ?, 'termine', NOW())
+            ON DUPLICATE KEY UPDATE statut = 'termine', date_completion = NOW()
+        ");
+        $stmt->execute([$_SESSION['user_id'], $quizInfo['lesson_id']]);
+    }
+
+    $pdo->commit();
+
+    // Vérifie l'attribution de certificat APRÈS le commit (hors transaction principale,
+    // car check_and_award_certificate fait ses propres requêtes de lecture/écriture)
+    if ($passed) {
+        $newCertificate = check_and_award_certificate($_SESSION['user_id'], $quizInfo['lesson_id']);
+    }
+
+    $response = [
+        'success' => true,
+        'score' => $score,
+        'passed' => (bool)$passed,
+        'message' => $passed ? 'Évaluation réussie !' : 'Score insuffisant.',
+        'certificate_awarded' => $newCertificate // null si aucun certificat attribué à cette occasion
+    ];
+
+    echo json_encode($response);
+    exit;
+}
+
 
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && has_role('teacher')) {
