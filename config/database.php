@@ -1,7 +1,7 @@
 <?php
 // config/database.php
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'lms_db');
+define('DB_NAME', 'db_lms');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 

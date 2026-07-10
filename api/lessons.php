@@ -7,12 +7,11 @@ require_once '../includes/functions.php';
 
 header('Content-Type: application/json');
 
-// Empêche tout warning/notice PHP de casser le JSON renvoyé au front
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 set_error_handler(function ($severity, $message, $file, $line) {
-    error_log("$message in $file on line $line"); // log serveur, pas dans la réponse
-    return true; // empêche l'affichage du warning dans la sortie
+    error_log("$message in $file on line $line");
+    return true;
 });
 
 $response = ['success' => false, 'message' => 'Action invalide'];
@@ -39,12 +38,11 @@ try {
 
         $target_dir = '../assets/uploads/' . ($type === 'pdf' ? 'pdfs/' : 'videos/');
 
-        // Vérification explicite que le dossier existe et est écrivable
         if (!is_dir($target_dir)) {
             mkdir($target_dir, 0755, true);
         }
         if (!is_writable($target_dir)) {
-            $response['message'] = " Le dossier $target_dir n'est pas accessible en écriture.";
+            $response['message'] = "❌ Le dossier $target_dir n'est pas accessible en écriture.";
             echo json_encode($response);
             exit;
         }
@@ -54,24 +52,43 @@ try {
         if ($uploadResult['success']) {
             $filename = $uploadResult['filename'];
 
-            // Étape 1 : calculer le prochain ordre dans une requête séparée
+            // Calcule le prochain ordre
             $stmtOrdre = $pdo->prepare("SELECT IFNULL(MAX(ordre), 0) + 1 FROM lessons WHERE course_id = ?");
             $stmtOrdre->execute([$course_id]);
             $nextOrdre = $stmtOrdre->fetchColumn();
 
-            // Étape 2 : insérer avec la valeur déjà calculée
+            // Insère la leçon
             $stmt = $pdo->prepare("
                 INSERT INTO lessons (course_id, titre, ordre, type, fichier_url) 
                 VALUES (?, ?, ?, ?, ?)
             ");
             $success = $stmt->execute([$course_id, $titre, $nextOrdre, $type, $filename]);
 
+            if (!$success) {
+                $response['message'] = 'Erreur lors de l\'enregistrement en base.';
+                echo json_encode($response);
+                exit;
+            }
+
+            $lesson_id = $pdo->lastInsertId();
+
+            // Crée automatiquement un quiz vide pour cette leçon
+            // Le prof devra le compléter via create_quiz.php
+            $stmtQuiz = $pdo->prepare("
+                INSERT INTO quizzes (lesson_id, titre, note_passage)
+                VALUES (?, ?, 50)
+            ");
+            $stmtQuiz->execute([$lesson_id, 'Évaluation — ' . $titre]);
+            $quiz_id = $pdo->lastInsertId();
+
             $response = [
-                'success' => $success,
-                'message' => $success ? ' Leçon ajoutée avec succès !' : 'Erreur lors de l\'enregistrement en base'
+                'success'   => true,
+                'message'   => '✅ Leçon ajoutée avec succès !',
+                'lesson_id' => $lesson_id,
+                'quiz_id'   => $quiz_id
             ];
         } else {
-            $response['message'] = ' ' . ($uploadResult['error'] ?? 'Échec du déplacement du fichier. Vérifiez les permissions des dossiers uploads/');
+            $response['message'] = '❌ ' . ($uploadResult['error'] ?? 'Échec du déplacement du fichier.');
         }
     }
 } catch (Throwable $e) {

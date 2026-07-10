@@ -1,7 +1,7 @@
 
 
-CREATE DATABASE IF NOT EXISTS lms_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE lms_db;
+CREATE DATABASE IF NOT EXISTS db_lms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE db_lms;
 
 -- Table des utilisateurs
 CREATE TABLE users (
