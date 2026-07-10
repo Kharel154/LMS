@@ -15,11 +15,20 @@ function log_connection($user_id, $action) {
 
 function upload_file($file, $target_dir, $allowed_ext = ['pdf', 'mp4']) {
     if (!isset($file['tmp_name']) || empty($file['tmp_name'])) {
-        return ['success' => false, 'error' => 'Fichier temporaire introuvable.'];
+        return ['success' => false, 'error' => 'Aucun fichier reçu.'];
     }
 
+    // Nettoyage et création du dossier
+    $target_dir = rtrim($target_dir, '/') . '/';
     if (!is_dir($target_dir)) {
-        mkdir($target_dir, 0755, true);
+        if (!mkdir($target_dir, 0775, true)) {
+            return ['success' => false, 'error' => "Impossible de créer le dossier $target_dir"];
+        }
+        chmod($target_dir, 0775);
+    }
+
+    if (!is_writable($target_dir)) {
+        return ['success' => false, 'error' => "Le dossier $target_dir n'est pas accessible en écriture."];
     }
 
     $filename = basename($file['name']);
@@ -30,20 +39,19 @@ function upload_file($file, $target_dir, $allowed_ext = ['pdf', 'mp4']) {
     }
 
     if ($file['size'] > 200 * 1024 * 1024) {
-        $taille_mo = round($file['size'] / 1024 / 1024, 1);
-        return ['success' => false, 'error' => "Fichier trop volumineux ($taille_mo Mo, max 200 Mo)."];
+        return ['success' => false, 'error' => "Fichier trop volumineux (max 200 Mo)."];
     }
 
     $new_name = uniqid('lesson_') . '.' . $ext;
-    $target_file = rtrim($target_dir, '/') . '/' . $new_name;
+    $target_file = $target_dir . $new_name;
 
     if (move_uploaded_file($file['tmp_name'], $target_file)) {
+        chmod($target_file, 0644); // fichier lisible
         return ['success' => true, 'filename' => $new_name];
     }
 
-    return ['success' => false, 'error' => 'Échec du déplacement physique du fichier (permissions ?).'];
+    return ['success' => false, 'error' => 'Échec du déplacement du fichier. Vérifiez les permissions.'];
 }
-
 
 
  // Génère un code de vérification de certificat lisible et unique.

@@ -62,7 +62,7 @@ document.getElementById('lesson-form').onsubmit = async (e) => {
         if (data.success) {
             document.getElementById('result').innerHTML = `
                 <div style="background:#ECFDF5; border:1px solid #10B981; border-radius:8px; padding:16px;">
-                    <p style="color:#065F46; font-weight:600; margin-bottom:12px;">✅ ${data.message}</p>
+                    <p style="color:#065F46; font-weight:600; margin-bottom:12px;"> ${data.message}</p>
                     <p style="color:#065F46; font-size:14px; margin-bottom:12px;">
                         Un quiz vide a été automatiquement créé pour cette leçon.
                         <strong>Complétez-le maintenant pour que les étudiants puissent passer l'évaluation.</strong>
@@ -70,7 +70,7 @@ document.getElementById('lesson-form').onsubmit = async (e) => {
                     <div style="display:flex; gap:10px; flex-wrap:wrap;">
                         <a href="create_quiz.php?lesson_id=${data.lesson_id}"
                            style="background:#6366F1; color:white; padding:10px 18px; border-radius:6px; text-decoration:none; font-weight:600;">
-                            ✏️ Compléter le quiz maintenant
+                             Compléter le quiz maintenant
                         </a>
                         <a href="course_builder.php?id=${formData.get('course_id')}"
                            style="background:#94A3B8; color:white; padding:10px 18px; border-radius:6px; text-decoration:none;">
@@ -83,7 +83,7 @@ document.getElementById('lesson-form').onsubmit = async (e) => {
         } else {
             document.getElementById('result').innerHTML = `
                 <div style="background:#FEF2F2; border:1px solid #EF4444; border-radius:8px; padding:14px; color:#991B1B;">
-                    ❌ ${data.message || 'Erreur inconnue'}
+                     ${data.message || 'Erreur inconnue'}
                 </div>
             `;
             btn.disabled = false;
@@ -92,7 +92,7 @@ document.getElementById('lesson-form').onsubmit = async (e) => {
     } catch (err) {
         document.getElementById('result').innerHTML = `
             <div style="background:#FEF2F2; border:1px solid #EF4444; border-radius:8px; padding:14px; color:#991B1B;">
-                ❌ Erreur réseau. Veuillez réessayer.
+                 Erreur réseau. Veuillez réessayer.
             </div>
         `;
         btn.disabled = false;
