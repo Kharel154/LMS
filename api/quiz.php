@@ -159,19 +159,28 @@ if ($action === 'submit_attempt' && $_SERVER['REQUEST_METHOD'] === 'POST' && has
         $pdo->beginTransaction();
 
         if ($quiz_id) {
-            // Mise à jour : on supprime les anciennes questions/choix puis on réinsère
+            // Mise à jour d'un quiz existant
             $stmt = $pdo->prepare("UPDATE quizzes SET titre = ?, note_passage = ? WHERE id = ?");
             $stmt->execute([$titre, $note_passage, $quiz_id]);
 
+            // Supprimer les anciennes données (questions + réponses)
+            $stmt = $pdo->prepare("DELETE qa FROM quiz_answers qa 
+                                JOIN quiz_attempts att ON att.id = qa.attempt_id 
+                                WHERE att.quiz_id = ?");
+            $stmt->execute([$quiz_id]);
+
+            $stmt = $pdo->prepare("DELETE FROM quiz_attempts WHERE quiz_id = ?");
+            $stmt->execute([$quiz_id]);
+
             $stmt = $pdo->prepare("DELETE FROM quiz_questions WHERE quiz_id = ?");
             $stmt->execute([$quiz_id]);
-            // quiz_choices est supprimé automatiquement via ON DELETE CASCADE sur question_id
+
         } else {
+            // Création d'un nouveau quiz
             $stmt = $pdo->prepare("INSERT INTO quizzes (lesson_id, titre, note_passage) VALUES (?, ?, ?)");
             $stmt->execute([$lesson_id, $titre, $note_passage]);
             $quiz_id = $pdo->lastInsertId();
         }
-
         $stmtQ = $pdo->prepare("
             INSERT INTO quiz_questions (quiz_id, question_text, type, ordre) VALUES (?, ?, ?, ?)
         ");

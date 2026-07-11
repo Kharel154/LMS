@@ -7,7 +7,6 @@ redirect_if_not_logged('teacher');
 
 $lesson_id = (int)($_GET['lesson_id'] ?? 0);
 
-// Vérifie que la leçon existe et appartient à un cours de cet enseignant
 $stmt = $pdo->prepare("
     SELECT l.id, l.titre AS lesson_titre, c.id AS course_id, c.titre AS course_titre
     FROM lessons l
@@ -17,11 +16,8 @@ $stmt = $pdo->prepare("
 $stmt->execute([$lesson_id, $_SESSION['user_id']]);
 $lesson = $stmt->fetch();
 
-if (!$lesson) {
-    die('Leçon introuvable ou accès non autorisé.');
-}
+if (!$lesson) die('Leçon introuvable ou accès non autorisé.');
 
-// Quiz existant pour cette leçon (s'il y en a déjà un)
 $stmt = $pdo->prepare("SELECT * FROM quizzes WHERE lesson_id = ?");
 $stmt->execute([$lesson_id]);
 $existing_quiz = $stmt->fetch();
@@ -52,189 +48,186 @@ require_once 'header.php';
 
     <label>Titre du quiz :</label>
     <input type="text" id="quiz_title" required style="width:100%; padding:10px; margin-bottom:15px;"
-        value="<?= htmlspecialchars($existing_quiz['titre'] ?? '') ?>">
+           value="<?= htmlspecialchars($existing_quiz['titre'] ?? 'Évaluation — ' . $lesson['lesson_titre']) ?>">
 
     <label>Note de passage (%) :</label>
     <input type="number" id="note_passage" min="0" max="100" value="<?= $existing_quiz['note_passage'] ?? 50 ?>"
-        style="width:100px; padding:8px; margin-bottom:20px;">
+           style="width:100px; padding:8px; margin-bottom:20px;">
 
     <div id="questions-container"></div>
 
-    <button type="button" class="btn" onclick="addQuestion()" style="background:#6366F1;">+ Ajouter une question</button>
-    <button type="submit" class="btn" style="background:#10B981;">💾 Enregistrer le Quiz</button>
+    <button type="button" onclick="addQuestion()" style="background:#6366F1; color:white; padding:10px 16px; border:none; border-radius:6px; margin:10px 0;">+ Ajouter une question</button>
+    <button type="submit" style="background:#10B981; color:white; padding:10px 20px; border:none; border-radius:6px;">💾 Enregistrer le Quiz</button>
 </form>
 
-<div id="result" style="margin-top:15px;"></div>
+<div id="result" style="margin-top:20px; font-weight:600;"></div>
 
 <script>
-    const LESSON_ID = document.getElementById('lesson_id').value;
-    const EXISTING_QUESTIONS = <?= json_encode($existing_questions) ?>;
-    let questionCount = 0;
+let questionCount = 0;
 
-    function addQuestion(data = null) {
-        questionCount++;
-        const qIndex = questionCount;
-        const container = document.getElementById('questions-container');
+function addQuestion(data = null) {
+    questionCount++;
+    const qIndex = questionCount;
+    const container = document.getElementById('questions-container');
 
-        const block = document.createElement('div');
-        block.className = 'question-block';
-        block.dataset.qindex = qIndex;
-        block.style = 'border:1px solid #E5E7EB; border-radius:8px; padding:15px; margin-bottom:15px;';
+    const block = document.createElement('div');
+    block.className = 'question-block';
+    block.dataset.index = qIndex;
+    block.style = 'border:1px solid #ddd; border-radius:8px; padding:15px; margin-bottom:20px; background:#fff;';
 
-        const qType = data?.type || 'qcm';
-        const qText = data?.question_text || '';
+    const qType = data?.type || 'qcm';
+    const qText = data?.question_text || '';
 
-        block.innerHTML = `
-                                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                                            <strong>Question ${qIndex}</strong>
-                                            <button type="button" onclick="this.closest('.question-block').remove()"
-                                                    style="background:#dc2626; color:white; border:none; padding:4px 10px; border-radius:4px; cursor:pointer;">
-                                                Supprimer
-                                            </button>
-                                        </div>
+    block.innerHTML = `
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <strong>Question ${qIndex}</strong>
+            <button type="button" onclick="this.closest('.question-block').remove()" style="background:#ef4444;color:white;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Supprimer</button>
+        </div>
 
-                                        <input type="text" class="q-text" placeholder="Énoncé de la question" required
-                                            value="${qText.replace(/"/g, '&quot;')}"
-                                            style="width:100%; padding:8px; margin:10px 0;">
+        <input type="text" class="q-text" placeholder="Énoncé de la question" required value="${qText.replace(/"/g,'&quot;')}" style="width:100%;padding:10px;margin-bottom:10px;">
 
-                                        <label>Type :</label>
-                                        <select class="q-type" onchange="toggleChoices(this)" style="margin-bottom:10px;">
-                                            <option value="qcm" ${qType === 'qcm' ? 'selected' : ''}>QCM</option>
-                                            <option value="vrai_faux" ${qType === 'vrai_faux' ? 'selected' : ''}>Vrai / Faux</option>
-                                        </select>
+        <label>Type :</label>
+        <select class="q-type" onchange="toggleChoices(this)" style="margin-bottom:10px;">
+            <option value="qcm" ${qType==='qcm'?'selected':''}>QCM</option>
+            <option value="vrai_faux" ${qType==='vrai_faux'?'selected':''}>Vrai / Faux</option>
+        </select>
 
-                                        <div class="choices-container"></div>
-                                        <button type="button" class="btn-add-choice" onclick="addChoice(this)"
-                                                style="background:#9CA3AF; margin-top:5px;">+ Ajouter un choix</button>
-                                    `;
+        <div class="choices-container"></div>
+        <button type="button" class="add-choice-btn" onclick="addChoice(this)" style="background:#64748b;color:white;padding:6px 12px;border:none;border-radius:4px;margin-top:8px;">+ Ajouter un choix</button>
+    `;
 
-        container.appendChild(block);
+    container.appendChild(block);
 
-        const choicesContainer = block.querySelector('.choices-container');
-        const addChoiceBtn = block.querySelector('.btn-add-choice');
+    const choicesCont = block.querySelector('.choices-container');
 
-        if (qType === 'vrai_faux') {
-            addChoiceBtn.style.display = 'none';
-            renderVraiFaux(choicesContainer, data?.choices);
-        } else {
-            if (data?.choices?.length) {
-                data.choices.forEach(c => addChoice(addChoiceBtn, c.choice_text, c.is_correct));
-            } else {
-                addChoice(addChoiceBtn);
-                addChoice(addChoiceBtn);
-            }
-        }
-    }
-
-    function toggleChoices(selectEl) {
-        const block = selectEl.closest('.question-block');
-        const choicesContainer = block.querySelector('.choices-container');
-        const addChoiceBtn = block.querySelector('.btn-add-choice');
-        choicesContainer.innerHTML = '';
-
-        if (selectEl.value === 'vrai_faux') {
-            addChoiceBtn.style.display = 'none';
-            renderVraiFaux(choicesContainer);
-        } else {
-            addChoiceBtn.style.display = 'inline-block';
-            addChoice(addChoiceBtn);
-            addChoice(addChoiceBtn);
-        }
-    }
-
-    function renderVraiFaux(container, choices = null) {
-        const vraiChecked = choices ? choices.find(c => c.choice_text === 'Vrai')?.is_correct : true;
-        container.innerHTML = `
-                                        <label><input type="radio" name="vf-${Date.now()}" class="vf-radio" value="Vrai" ${vraiChecked ? 'checked' : ''}> Vrai</label>
-                                        <label style="margin-left:15px;"><input type="radio" name="vf-${Date.now()}" class="vf-radio" value="Faux" ${!vraiChecked ? 'checked' : ''}> Faux</label>
-                                    `;
-        // Corrige le name pour que les deux radios soient bien liées entre elles
-        const radios = container.querySelectorAll('.vf-radio');
-        const sharedName = 'vf-' + Math.random();
-        radios.forEach(r => r.name = sharedName);
-    }
-
-    function addChoice(btnEl, text = '', isCorrect = false) {
-        const block = btnEl.closest('.question-block');
-        const choicesContainer = block.querySelector('.choices-container');
-        const groupName = 'correct-' + block.dataset.qindex;
-
-        const row = document.createElement('div');
-        row.className = 'choice-row';
-        row.style = 'display:flex; align-items:center; gap:8px; margin-bottom:6px;';
-        row.innerHTML = `
-                                        <input type="radio" name="${groupName}" class="choice-correct" ${isCorrect ? 'checked' : ''}>
-                                        <input type="text" class="choice-text" placeholder="Texte du choix" value="${text.replace(/"/g, '&quot;')}"
-                                            required style="flex:1; padding:6px;">
-                                        <button type="button" onclick="this.closest('.choice-row').remove()"
-                                                style="background:#F87171; color:white; border:none; padding:3px 8px; border-radius:4px; cursor:pointer;">×</button>
-                                    `;
-        choicesContainer.appendChild(row);
-    }
-
-    // Pré-remplissage si un quiz existe déjà
-    if (EXISTING_QUESTIONS.length > 0) {
-        EXISTING_QUESTIONS.forEach(q => addQuestion(q));
+    if (qType === 'vrai_faux') {
+        block.querySelector('.add-choice-btn').style.display = 'none';
+        renderVraiFaux(choicesCont, data?.choices, qIndex);
+    } else if (data?.choices && data.choices.length > 0) {
+        data.choices.forEach(c => addChoice(block.querySelector('.add-choice-btn'), c.choice_text, c.is_correct));
     } else {
-        addQuestion();
+        addChoice(block.querySelector('.add-choice-btn'));
+        addChoice(block.querySelector('.add-choice-btn'));
     }
+}
 
-    document.getElementById('quiz-form').onsubmit = async (e) => {
-                e.preventDefault();
+function toggleChoices(select) {
+    const block = select.closest('.question-block');
+    const cont = block.querySelector('.choices-container');
+    cont.innerHTML = '';
+    if (select.value === 'vrai_faux') {
+        block.querySelector('.add-choice-btn').style.display = 'none';
+        renderVraiFaux(cont, null, block.dataset.index);
+    } else {
+        block.querySelector('.add-choice-btn').style.display = 'inline-block';
+        addChoice(block.querySelector('.add-choice-btn'));
+        addChoice(block.querySelector('.add-choice-btn'));
+    }
+}
 
-                const questions = [];
-                document.querySelectorAll('.question-block').forEach(block => {
-                    const type = block.querySelector('.q-type').value;
-                    const text = block.querySelector('.q-text').value;
-                    let choices = [];
+function renderVraiFaux(container, choices = null, qIndex) {
+    const uniqueName = `vf-q-${qIndex}`;
+    const vraiCorrect = choices ? choices.find(c => c.choice_text === 'Vrai')?.is_correct : true;
 
-                    if (type === 'vrai_faux') {
-                        block.querySelectorAll('.vf-radio').forEach(r => {
-                            choices.push({
-                                text: r.value,
-                                is_correct: r.checked
-                            });
-                        });
-                    } else {
-                        block.querySelectorAll('.choice-row').forEach(row => {
-                            choices.push({
-                                text: row.querySelector('.choice-text').value,
-                                is_correct: row.querySelector('.choice-correct').checked
-                            });
+    container.innerHTML = `
+        <label style="margin-right:20px;">
+            <input type="radio" name="${uniqueName}" value="Vrai" ${vraiCorrect ? 'checked' : ''}> Vrai
+        </label>
+        <label>
+            <input type="radio" name="${uniqueName}" value="Faux" ${!vraiCorrect ? 'checked' : ''}> Faux
+        </label>
+    `;
+}
+
+function addChoice(btn, text = '', isCorrect = false) {
+    const block = btn.closest('.question-block');
+    const cont = block.querySelector('.choices-container');
+    const name = 'correct-' + block.dataset.index;
+
+    const div = document.createElement('div');
+    div.style = 'display:flex; align-items:center; gap:8px; margin:6px 0;';
+    div.innerHTML = `
+        <input type="radio" name="${name}" ${isCorrect ? 'checked' : ''}>
+        <input type="text" class="choice-text" value="${text}" required style="flex:1; padding:8px;">
+        <button type="button" onclick="this.parentElement.remove()" style="background:#f87171;color:white;border:none;padding:4px 8px;border-radius:4px;">×</button>
+    `;
+    cont.appendChild(div);
+}
+
+// Chargement initial
+const EXISTING = <?= json_encode($existing_questions ?? []) ?>;
+
+if (EXISTING.length > 0) {
+    EXISTING.forEach(q => addQuestion(q));
+} else {
+    addQuestion();
+}
+
+// Soumission finale
+document.getElementById('quiz-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const questions = [];
+
+    document.querySelectorAll('.question-block').forEach(block => {
+        const text = block.querySelector('.q-text').value.trim();
+        const type = block.querySelector('.q-type').value;
+        const choices = [];
+
+        if (type === 'vrai_faux') {
+            block.querySelectorAll('input[type="radio"]').forEach(r => {
+                if (r.name.includes('vf-q')) {
+                    choices.push({ text: r.value, is_correct: r.checked });
+                }
+            });
+        } else {
+            // QCM - meilleure détection
+            block.querySelectorAll('.choices-container > div').forEach(row => {
+                const input = row.querySelector('.choice-text');
+                const radio = row.querySelector('input[type="radio"]');
+                if (input) {
+                    const txt = input.value.trim();
+                    if (txt) {
+                        choices.push({
+                            text: txt,
+                            is_correct: radio ? radio.checked : false
                         });
                     }
+                }
+            });
+        }
 
-                    questions.push({
-                        type,
-                        text,
-                        choices
-                    });
-                });
+        if (text && choices.length > 0) {
+            questions.push({ type, text, choices });
+        }
+    });
 
-                const payload = {
-                        lesson_id: LESSON_ID,
-                        quiz_id: document.getElementById('quiz_id').value || null,
-                        titre: document.getElementById('quiz_title').value,
-                        note_passage: parseInt(document.getElementById('note_passage').value, 10),
-				questions
-			};
+    if (questions.length === 0) {
+        alert("Ajoutez au moins une question avec du texte et des choix.");
+        return;
+    }
 
-			try {
-				const res = await fetch('../api/quiz.php', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(payload)
-				});
+    const payload = {
+        lesson_id: document.getElementById('lesson_id').value,
+        quiz_id: document.getElementById('quiz_id').value || null,
+        titre: document.getElementById('quiz_title').value.trim(),
+        note_passage: parseInt(document.getElementById('note_passage').value) || 50,
+        questions
+    };
 
-				const data = await res.json();
-
-				document.getElementById('result').innerHTML = data.success
-					? `<p style="color:green;"> ${data.message}</p>`
-					: `<p style="color:red;"> ${data.message}</p>`;
-
-			} catch (err) {
-				document.getElementById('result').innerHTML = `<p style="color:red;"> Erreur réseau lors de l'enregistrement.</p>`;
-			}
-		};
-
+    try {
+        const res = await fetch('../api/quiz.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        document.getElementById('result').innerHTML = data.success 
+            ? `<span style="color:green;">${data.message}</span>` 
+            : `<span style="color:red;">${data.message}</span>`;
+    } catch (err) {
+        document.getElementById('result').innerHTML = `<span style="color:red;">Erreur réseau</span>`;
+    }
+};
 </script>
+
+<?php require_once '../includes/footer.php'; ?>
