@@ -33,3 +33,51 @@
     width: 90%;
     max-width: 500px;
 }
+
+/* Amélioration tableau utilisateurs */
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.users-table th, .users-table td {
+    padding: 14px 12px;
+    text-align: left;
+    border-bottom: 1px solid #E2E8F0;
+}
+
+.users-table th {
+    background: #1E293B;
+    color: white;
+    font-weight: 600;
+}
+
+.users-table tr:hover {
+    background: #F8FAFC;
+}
+
+.badge {
+    padding: 5px 12px;
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.badge.success { background: #10B981; color: white; }
+.badge.danger  { background: #EF4444; color: white; }
+
+.btn-small {
+    padding: 6px 12px;
+    margin-right: 6px;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-small.warning { background: #F59E0B; color: white; }
+.btn-small.success { background: #10B981; color: white; }
