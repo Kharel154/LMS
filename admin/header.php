@@ -1,6 +1,7 @@
 <?php
 // admin/header.php
 if (!isset($title)) $title = "LMS - Administration";
+$current = basename($_SERVER['PHP_SELF']);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -24,13 +25,13 @@ if (!isset($title)) $title = "LMS - Administration";
         <aside class="sidebar">
             <div class="logo">LMS Admin</div>
             <nav>
-                <a href="dashboard.php" class="nav-link"><span>Dashboard</span></a>
-                <a href="users.php" class="nav-link"><span>Utilisateurs</span></a>
-                <a href="modules.php" class="nav-link"><span>Modules</span></a>
-                <a href="course_validation.php" class="nav-link"><span>Validation</span></a>
-                <a href="analytics.php" class="nav-link"><span>Analytics</span></a>
-                <a href="reports.php" class="nav-link"><span>Signalements</span></a>
-                <a href="system_config.php" class="nav-link"><span>Configuration</span></a>
+                <a href="dashboard.php" class="nav-link <?= $current === 'dashboard.php' ? 'active' : '' ?>"><span>Dashboard</span></a>
+                <a href="users.php" class="nav-link <?= $current === 'users.php' ? 'active' : '' ?>"><span>Utilisateurs</span></a>
+                <a href="modules.php" class="nav-link <?= $current === 'modules.php' ? 'active' : '' ?>"><span>Modules</span></a>
+                <a href="course_validation.php" class="nav-link <?= $current === 'course_validation.php' ? 'active' : '' ?>"><span>Validation</span></a>
+                <a href="analytics.php" class="nav-link <?= $current === 'analytics.php' ? 'active' : '' ?>"><span>Analytics</span></a>
+                <a href="reports.php" class="nav-link <?= $current === 'reports.php' ? 'active' : '' ?>"><span>Signalements</span></a>
+                <a href="system_config.php" class="nav-link <?= $current === 'system_config.php' ? 'active' : '' ?>"><span>Configuration</span></a>
             </nav>
         </aside>
 
