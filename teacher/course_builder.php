@@ -179,6 +179,17 @@ if ($course_id) {
                     $stmtQCount->execute([$quiz['id']]);
                     $nbQuestions = (int)$stmtQCount->fetchColumn();
                 }
+
+                $stmtAssign = $pdo->prepare("SELECT id, titre FROM assignments WHERE lesson_id = ?");
+                $stmtAssign->execute([$lesson['id']]);
+                $assignment = $stmtAssign->fetch();
+
+                $nbSubmissions = 0;
+                if ($assignment) {
+                    $stmtSub = $pdo->prepare("SELECT COUNT(*) FROM assignment_submissions WHERE assignment_id = ?");
+                    $stmtSub->execute([$assignment['id']]);
+                    $nbSubmissions = (int)$stmtSub->fetchColumn();
+                }
             ?>
             <li style="padding:16px; border:1px solid #E2E8F0; border-radius:8px; margin-bottom:12px;" id="lesson-<?= $lesson['id'] ?>">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
@@ -190,7 +201,13 @@ if ($course_id) {
                             <span style="display:inline-block; margin-left:8px; font-size:12px; padding:2px 8px; border-radius:9999px;
                                 background:<?= $nbQuestions > 0 ? '#ECFDF5' : '#FEF3C7' ?>;
                                 color:<?= $nbQuestions > 0 ? '#065F46' : '#92400E' ?>;">
-                                <?= $nbQuestions > 0 ? "✓ Quiz ({$nbQuestions} questions)" : '⚠️ Quiz vide — à compléter' ?>
+                                <?= $nbQuestions > 0 ? "✓ Quiz ({$nbQuestions} questions)" : ' Quiz vide — à compléter' ?>
+                            </span>
+                        <?php endif; ?>
+
+                        <?php if ($assignment): ?>
+                            <span style="display:inline-block; margin-left:8px; font-size:12px; padding:2px 8px; border-radius:9999px; background:#EEF2FF; color:#3730A3;">
+                                Devoir — <?= $nbSubmissions ?> soumission<?= $nbSubmissions > 1 ? 's' : '' ?>
                             </span>
                         <?php endif; ?>
                     </div>
@@ -199,9 +216,14 @@ if ($course_id) {
                         <?php if ($quiz): ?>
                         <a href="create_quiz.php?lesson_id=<?= $lesson['id'] ?>"
                            style="background:<?= $nbQuestions > 0 ? '#F59E0B' : '#EF4444' ?>; color:white; padding:5px 12px; border-radius:4px; font-size:13px; text-decoration:none;">
-                            <?= $nbQuestions > 0 ? '✏️ Modifier le quiz' : '⚠️ Compléter le quiz' ?>
+                            <?= $nbQuestions > 0 ? ' Modifier le quiz' : ' Compléter le quiz' ?>
                         </a>
                         <?php endif; ?>
+
+                        <a href="create_assignment.php?lesson_id=<?= $lesson['id'] ?>"
+                           style="background:#6366F1; color:white; padding:5px 12px; border-radius:4px; font-size:13px; text-decoration:none;">
+                            <?= $assignment ? 'Modifier le devoir' : '+ Ajouter un devoir' ?>
+                        </a>
 
                         <button type="button" class="btn-delete-lesson" data-lesson-id="<?= $lesson['id'] ?>"
                                 style="background:#EF4444; color:white; border:none; padding:5px 12px; border-radius:4px; font-size:13px; cursor:pointer;">
@@ -246,7 +268,7 @@ document.querySelectorAll('.btn-delete-lesson').forEach(btn => {
         if (data.success) {
             document.getElementById('lesson-' + lessonId).remove();
         } else {
-            alert('❌ ' + (data.message || 'Erreur lors de la suppression.'));
+            alert(' ' + (data.message || 'Erreur lors de la suppression.'));
         }
     });
 });

@@ -45,8 +45,8 @@ $graded = $stmt->fetchAll();
 
 $csrfToken = generate_csrf_token();
 
-// Dossier des dépôts de devoirs. À ajuster si le chemin réel diffère
-// (non documenté au moment de cette mise à jour — vérifier avec student/upload_assignment.php).
+// Dossier des dépôts de devoirs. Correspond à celui utilisé par api/assignments.php
+// (action=submit) pour l'enregistrement des fichiers envoyés par les étudiants.
 $assignmentUploadPath = '../assets/uploads/assignments/';
 ?>
 

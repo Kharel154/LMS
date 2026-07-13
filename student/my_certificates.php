@@ -36,7 +36,7 @@ $certificates = $stmt->fetchAll();
 
 <?php if (empty($certificates)): ?>
     <div style="background:white; border-radius:10px; padding:40px; text-align:center; color:#64748B; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
-        <div style="font-size:48px; margin-bottom:16px;">🎓</div>
+        <div style="font-size:48px; margin-bottom:16px;"></div>
         <p style="margin-bottom:8px; font-weight:600;">Aucun certificat pour le moment</p>
         <p style="font-size:14px; margin-bottom:20px;">Complétez tous les cours d'un module pour obtenir votre certificat.</p>
         <a href="catalogue.php" class="btn">Parcourir le catalogue</a>
@@ -49,7 +49,7 @@ $certificates = $stmt->fetchAll();
 
         <!-- Bandeau supérieur -->
         <div style="background:linear-gradient(135deg, #4F46E5, #818CF8); padding:24px; text-align:center; color:white;">
-            <div style="font-size:36px; margin-bottom:8px;">🎓</div>
+            <div style="font-size:36px; margin-bottom:8px;"></div>
             <div style="font-size:11px; text-transform:uppercase; letter-spacing:2px; opacity:0.8; margin-bottom:4px;">Certificat de complétion</div>
             <div style="font-size:20px; font-weight:700;"><?= htmlspecialchars($cert['module_nom']) ?></div>
         </div>
