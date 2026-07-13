@@ -1,26 +1,4 @@
 <?php
-/**
- * student/quiz-attempt.php
- *
- * Affiche les questions d'une evaluation et gere la soumission des reponses.
- *
- * Fonctionnement general :
- *   1. Verifie que l'etudiant est inscrit au cours auquel appartient la lecon.
- *   2. Charge les questions et leurs choix de reponse depuis la base de donnees.
- *      Le champ "is_correct" n'est deliberement pas transmis au navigateur
- *      afin d'empecher la triche par inspection du code source.
- *   3. Affiche l'historique de la meilleure tentative precedente (si elle existe).
- *   4. A la soumission, envoie les reponses en JSON vers api/quiz.php
- *      (action submit_attempt) qui calcule le score cote serveur.
- *   5. Affiche le resultat sans rechargement de page.
- *
- * Corrections appliquees :
- *   - Ajout de "unset($q)" apres le foreach par reference pour eviter
- *     qu'une reference residuelle duplique la derniere question dans le HTML.
- *   - Lecture du question_id depuis "data-question-id" (attribut HTML) plutot
- *     que depuis le "name" du radio, ce qui elimine tout risque de confusion
- *     entre questions Vrai/Faux dont les groupes radio partagent la meme racine.
- */
 
 session_start();
 require_once '../config/database.php';
@@ -85,15 +63,8 @@ $questions = $stmt->fetchAll();
 
 // Chargement des choix de reponse pour chaque question
 //
-// IMPORTANT : seuls "id" et "choice_text" sont selectionnes.
-// Le champ "is_correct" est volontairement exclu pour ne pas l'exposer
-// dans le code HTML source visible par l'etudiant.
-//
-// IMPORTANT : le "unset($q)" apres la boucle est obligatoire.
-// Sans lui, $q reste une reference vers le dernier element du tableau.
-// Le foreach suivant (dans le HTML) ecraserait cet element a chaque iteration,
-// provoquant la duplication de la derniere question et la disparition
-// de l'avant-derniere dans l'affichage.
+
+
 
 
 foreach ($questions as &$q) {
