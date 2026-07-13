@@ -114,7 +114,7 @@ require_once '../includes/header.php';
     <?php if ($lesson['type'] === 'video'): ?>
 
         
-        <div style="position:relative; padding-top:40%; width:70%; background:#000; border-radius:8px; overflow:hidden;">
+        <div style="position:relative; padding-top:56.25%; background:#000; border-radius:8px; overflow:hidden;">
             <video id="lesson-video"
                    controls
                    style="position:absolute; top:0; left:0;  height:100%;">
