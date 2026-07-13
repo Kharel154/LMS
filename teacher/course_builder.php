@@ -29,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titre'])) {
     $titre      = sanitize_input($_POST['titre'] ?? '');
     $description = sanitize_input($_POST['description'] ?? '');
     $module_id  = !empty($_POST['module_id']) ? (int)$_POST['module_id'] : null;
+    $duree_estimee = !empty($_POST['duree_estimee']) ? (int)$_POST['duree_estimee'] : null;
     $categorie_id = 1; // valeur par défaut
 
     // Si le module est sélectionné, on récupère sa catégorie
@@ -50,11 +51,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titre'])) {
     } else {
         if ($course_id) {
             $stmt = $pdo->prepare("
-                UPDATE courses SET titre = ?, description = ?, module_id = ?, categorie_id = ?
+                UPDATE courses SET titre = ?, description = ?, module_id = ?, categorie_id = ?, duree_estimee = ?
                 WHERE id = ? AND enseignant_id = ?
             ");
-            $stmt->execute([$titre, $description, $module_id, $categorie_id, $course_id, $_SESSION['user_id']]);
-            $message = "✅ Cours mis à jour avec succès !";
+            $stmt->execute([$titre, $description, $module_id, $categorie_id, $duree_estimee, $course_id, $_SESSION['user_id']]);
+            $message = "Cours mis à jour avec succès.";
 
             // Rafraîchit les données du cours
             $stmt = $pdo->prepare("SELECT * FROM courses WHERE id = ? AND enseignant_id = ?");
@@ -62,12 +63,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['titre'])) {
             $course = $stmt->fetch();
         } else {
             $stmt = $pdo->prepare("
-                INSERT INTO courses (titre, description, enseignant_id, module_id, categorie_id, statut)
-                VALUES (?, ?, ?, ?, ?, 'en_attente')
+                INSERT INTO courses (titre, description, enseignant_id, module_id, categorie_id, duree_estimee, statut)
+                VALUES (?, ?, ?, ?, ?, ?, 'en_attente')
             ");
-            $stmt->execute([$titre, $description, $_SESSION['user_id'], $module_id, $categorie_id]);
+            $stmt->execute([$titre, $description, $_SESSION['user_id'], $module_id, $categorie_id, $duree_estimee]);
             $course_id = $pdo->lastInsertId();
-            $message = "✅ Cours créé ! En attente de validation par l'admin.";
+            $message = "Cours créé. En attente de validation par l'administrateur.";
 
             // Charge le cours créé
             $stmt = $pdo->prepare("SELECT * FROM courses WHERE id = ?");
@@ -86,8 +87,29 @@ if ($course_id) {
 }
 ?>
 
+<?php
+$statusLabels = [
+    'publie'     => 'Publié',
+    'en_attente' => 'En attente de validation',
+    'brouillon'  => 'Brouillon',
+    'rejete'     => 'Rejeté',
+];
+$nbInscrits = 0;
+if ($course_id) {
+    $stmtIns = $pdo->prepare("SELECT COUNT(*) FROM enrollments WHERE course_id = ?");
+    $stmtIns->execute([$course_id]);
+    $nbInscrits = (int)$stmtIns->fetchColumn();
+}
+?>
+
 <p><a href="my_courses.php" style="color:#64748B; text-decoration:none;">← Mes cours</a></p>
-<h1><?= $course ? 'Modifier' : 'Créer' ?> un cours</h1>
+<div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+    <h1 style="margin:0;"><?= $course ? 'Modifier' : 'Créer' ?> un cours</h1>
+    <?php if ($course): ?>
+        <span class="badge <?= $course['statut'] ?>"><?= htmlspecialchars($statusLabels[$course['statut']] ?? $course['statut']) ?></span>
+        <span style="color:#64748B; font-size:14px;"><?= $nbInscrits ?> étudiant<?= $nbInscrits > 1 ? 's' : '' ?> inscrit<?= $nbInscrits > 1 ? 's' : '' ?></span>
+    <?php endif; ?>
+</div>
 
 <?php if ($message): ?>
     <div style="background:<?= $messageType === 'green' ? '#ECFDF5' : '#FEF2F2' ?>; border:1px solid <?= $messageType === 'green' ? '#10B981' : '#EF4444' ?>; color:<?= $messageType === 'green' ? '#065F46' : '#991B1B' ?>; padding:12px 16px; border-radius:8px; margin-bottom:20px;">
@@ -122,7 +144,11 @@ if ($course_id) {
                style="width:100%; padding:10px; margin-bottom:16px; border:1px solid #E2E8F0; border-radius:6px; font-size:14px;">
 
         <label style="font-weight:600; display:block; margin-bottom:4px;">Description</label>
-        <textarea name="description" rows="4" style="width:100%; padding:10px; margin-bottom:20px; border:1px solid #E2E8F0; border-radius:6px; font-size:14px;"><?= htmlspecialchars($course['description'] ?? '') ?></textarea>
+        <textarea name="description" rows="4" style="width:100%; padding:10px; margin-bottom:16px; border:1px solid #E2E8F0; border-radius:6px; font-size:14px;"><?= htmlspecialchars($course['description'] ?? '') ?></textarea>
+
+        <label style="font-weight:600; display:block; margin-bottom:4px;">Durée estimée <span style="color:#64748B; font-weight:400; font-size:13px;">(en minutes, facultatif)</span></label>
+        <input type="number" name="duree_estimee" min="0" step="1" value="<?= htmlspecialchars($course['duree_estimee'] ?? '') ?>"
+               style="width:100%; padding:10px; margin-bottom:20px; border:1px solid #E2E8F0; border-radius:6px; font-size:14px;">
 
         <button type="submit" class="btn" <?= empty($modules) ? 'disabled' : '' ?>>
             <?= $course ? 'Mettre à jour le cours' : 'Créer le cours' ?>

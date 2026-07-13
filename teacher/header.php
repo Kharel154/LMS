@@ -1,6 +1,9 @@
 <?php
 // teacher/header.php
 if (!isset($title)) $title = "LMS - Enseignant";
+
+// Détermine la page courante pour marquer le lien actif dans la sidebar
+$current = basename($_SERVER['PHP_SELF']);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -23,11 +26,11 @@ if (!isset($title)) $title = "LMS - Enseignant";
         <aside class="sidebar">
             <div class="logo">LMS Prof</div>
             <nav>
-                <a href="dashboard.php" class="nav-link"><span>Tableau de bord</span></a>
-                <a href="my_courses.php" class="nav-link"><span>Mes cours</span></a>
-                <a href="course_builder.php" class="nav-link"><span>Créer un cours</span></a>
-                <a href="grading_hub.php" class="nav-link"><span>Corrections</span></a>
-                <a href="student_progress.php" class="nav-link"><span>Suivi élèves</span></a>
+                <a href="dashboard.php" class="nav-link <?= $current === 'dashboard.php' ? 'active' : '' ?>"><span>Tableau de bord</span></a>
+                <a href="my_courses.php" class="nav-link <?= $current === 'my_courses.php' ? 'active' : '' ?>"><span>Mes cours</span></a>
+                <a href="course_builder.php" class="nav-link <?= $current === 'course_builder.php' ? 'active' : '' ?>"><span>Créer un cours</span></a>
+                <a href="grading_hub.php" class="nav-link <?= $current === 'grading_hub.php' ? 'active' : '' ?>"><span>Corrections</span></a>
+                <a href="student_progress.php" class="nav-link <?= $current === 'student_progress.php' ? 'active' : '' ?>"><span>Suivi élèves</span></a>
             </nav>
         </aside>
 
